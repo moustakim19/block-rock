@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Block Rock</title>
+  <!-- Logo Block Rock : pièce en T faite de 4 blocs d'obsidienne taillés comme des gemmes -->
+  <defs>
+    <!-- Fond : obsidienne, du violet très sombre au noir -->
+    <linearGradient id="fond" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E1734"/><stop offset="1" stop-color="#040307"/></linearGradient>
+    <!-- Halo lumineux derrière la pièce -->
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#8F5BFF" stop-opacity="0.45"/><stop offset="1" stop-color="#8F5BFF" stop-opacity="0"/></radialGradient>
+    <!-- Couleur du bloc violet : clair en haut à gauche, foncé en bas à droite -->
+    <linearGradient id="g-violet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C29BFF"/><stop offset="1" stop-color="#4A1DA6"/></linearGradient>
+    <!-- Couleur du bloc turquoise : clair en haut à gauche, foncé en bas à droite -->
+    <linearGradient id="g-turquoise" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6CF5E6"/><stop offset="1" stop-color="#0A7470"/></linearGradient>
+    <!-- Couleur du bloc rose : clair en haut à gauche, foncé en bas à droite -->
+    <linearGradient id="g-rose" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF86C6"/><stop offset="1" stop-color="#9E1460"/></linearGradient>
+    <!-- Couleur du bloc or : clair en haut à gauche, foncé en bas à droite -->
+    <linearGradient id="g-or" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD976"/><stop offset="1" stop-color="#B0600C"/></linearGradient>
+  </defs>
+  <!-- Fond arrondi (forme d'icône d'appli) -->
+  <rect width="512" height="512" rx="112" fill="url(#fond)"/>
+  <!-- Reflets d'obsidienne dans le fond -->
+  <path d="M0 140 L170 0 L250 0 L0 220 Z" fill="#FFFFFF" opacity="0.03"/>
+  <path d="M512 330 L330 512 L270 512 L512 270 Z" fill="#FFFFFF" opacity="0.025"/>
+  <circle cx="256" cy="250" r="230" fill="url(#halo)"/>
+  <!-- Ombre lumineuse sous la pièce -->
+  <ellipse cx="256" cy="402" rx="120" ry="14" fill="#8F5BFF" opacity="0.25"/>
+  <!-- Bloc violet -->
+  <g>
+    <rect x="76" y="136" width="120" height="120" rx="10" fill="#0C0A12"/>
+    <rect x="79" y="139" width="114" height="114" rx="8" fill="url(#g-violet)"/>
+    <path d="M79 139 L193 139 L174 158 L98 158 Z" fill="#FFFFFF" opacity="0.32"/>
+    <path d="M79 139 L98 158 L98 234 L79 253 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M193 139 L193 253 L174 234 L174 158 Z" fill="#000000" opacity="0.22"/>
+    <path d="M79 253 L98 234 L174 234 L193 253 Z" fill="#000000" opacity="0.42"/>
+    <path d="M98 158 L174 158 L152.0 180.0 L120.0 180.0 Z" fill="#FFFFFF" opacity="0.16"/>
+    <path d="M174 158 L174 234 L152.0 212.0 L152.0 180.0 Z" fill="#000000" opacity="0.12"/>
+    <path d="M174 234 L98 234 L120.0 212.0 L152.0 212.0 Z" fill="#000000" opacity="0.26"/>
+    <path d="M98 234 L98 158 L120.0 180.0 L120.0 212.0 Z" fill="#FFFFFF" opacity="0.06"/>
+    <rect x="120.0" y="180.0" width="32" height="32" fill="#FFFFFF" opacity="0.10"/>
+    <path d="M98 158 L120.0 180.0 M174 158 L152.0 180.0 M174 234 L152.0 212.0 M98 234 L120.0 212.0" stroke="#FFFFFF" stroke-width="1.2" opacity="0.25" fill="none"/>
+    <rect x="98" y="158" width="76" height="76" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.2"/>
+    <path d="M84 144 L116 144 L84 176 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M166 244 L184 244 L184 226 Z" fill="#FFFFFF" opacity="0.12"/>
+    <rect x="79" y="139" width="114" height="114" rx="8" fill="none" stroke="#C29BFF" stroke-width="2" opacity="0.7"/>
+  </g>
+  <!-- Bloc turquoise -->
+  <g>
+    <rect x="196" y="136" width="120" height="120" rx="10" fill="#0C0A12"/>
+    <rect x="199" y="139" width="114" height="114" rx="8" fill="url(#g-turquoise)"/>
+    <path d="M199 139 L313 139 L294 158 L218 158 Z" fill="#FFFFFF" opacity="0.32"/>
+    <path d="M199 139 L218 158 L218 234 L199 253 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M313 139 L313 253 L294 234 L294 158 Z" fill="#000000" opacity="0.22"/>
+    <path d="M199 253 L218 234 L294 234 L313 253 Z" fill="#000000" opacity="0.42"/>
+    <path d="M218 158 L294 158 L272.0 180.0 L240.0 180.0 Z" fill="#FFFFFF" opacity="0.16"/>
+    <path d="M294 158 L294 234 L272.0 212.0 L272.0 180.0 Z" fill="#000000" opacity="0.12"/>
+    <path d="M294 234 L218 234 L240.0 212.0 L272.0 212.0 Z" fill="#000000" opacity="0.26"/>
+    <path d="M218 234 L218 158 L240.0 180.0 L240.0 212.0 Z" fill="#FFFFFF" opacity="0.06"/>
+    <rect x="240.0" y="180.0" width="32" height="32" fill="#FFFFFF" opacity="0.10"/>
+    <path d="M218 158 L240.0 180.0 M294 158 L272.0 180.0 M294 234 L272.0 212.0 M218 234 L240.0 212.0" stroke="#FFFFFF" stroke-width="1.2" opacity="0.25" fill="none"/>
+    <rect x="218" y="158" width="76" height="76" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.2"/>
+    <path d="M204 144 L236 144 L204 176 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M286 244 L304 244 L304 226 Z" fill="#FFFFFF" opacity="0.12"/>
+    <rect x="199" y="139" width="114" height="114" rx="8" fill="none" stroke="#6CF5E6" stroke-width="2" opacity="0.7"/>
+  </g>
+  <!-- Bloc rose -->
+  <g>
+    <rect x="316" y="136" width="120" height="120" rx="10" fill="#0C0A12"/>
+    <rect x="319" y="139" width="114" height="114" rx="8" fill="url(#g-rose)"/>
+    <path d="M319 139 L433 139 L414 158 L338 158 Z" fill="#FFFFFF" opacity="0.32"/>
+    <path d="M319 139 L338 158 L338 234 L319 253 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M433 139 L433 253 L414 234 L414 158 Z" fill="#000000" opacity="0.22"/>
+    <path d="M319 253 L338 234 L414 234 L433 253 Z" fill="#000000" opacity="0.42"/>
+    <path d="M338 158 L414 158 L392.0 180.0 L360.0 180.0 Z" fill="#FFFFFF" opacity="0.16"/>
+    <path d="M414 158 L414 234 L392.0 212.0 L392.0 180.0 Z" fill="#000000" opacity="0.12"/>
+    <path d="M414 234 L338 234 L360.0 212.0 L392.0 212.0 Z" fill="#000000" opacity="0.26"/>
+    <path d="M338 234 L338 158 L360.0 180.0 L360.0 212.0 Z" fill="#FFFFFF" opacity="0.06"/>
+    <rect x="360.0" y="180.0" width="32" height="32" fill="#FFFFFF" opacity="0.10"/>
+    <path d="M338 158 L360.0 180.0 M414 158 L392.0 180.0 M414 234 L392.0 212.0 M338 234 L360.0 212.0" stroke="#FFFFFF" stroke-width="1.2" opacity="0.25" fill="none"/>
+    <rect x="338" y="158" width="76" height="76" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.2"/>
+    <path d="M324 144 L356 144 L324 176 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M406 244 L424 244 L424 226 Z" fill="#FFFFFF" opacity="0.12"/>
+    <rect x="319" y="139" width="114" height="114" rx="8" fill="none" stroke="#FF86C6" stroke-width="2" opacity="0.7"/>
+  </g>
+  <!-- Bloc or -->
+  <g>
+    <rect x="196" y="256" width="120" height="120" rx="10" fill="#0C0A12"/>
+    <rect x="199" y="259" width="114" height="114" rx="8" fill="url(#g-or)"/>
+    <path d="M199 259 L313 259 L294 278 L218 278 Z" fill="#FFFFFF" opacity="0.32"/>
+    <path d="M199 259 L218 278 L218 354 L199 373 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M313 259 L313 373 L294 354 L294 278 Z" fill="#000000" opacity="0.22"/>
+    <path d="M199 373 L218 354 L294 354 L313 373 Z" fill="#000000" opacity="0.42"/>
+    <path d="M218 278 L294 278 L272.0 300.0 L240.0 300.0 Z" fill="#FFFFFF" opacity="0.16"/>
+    <path d="M294 278 L294 354 L272.0 332.0 L272.0 300.0 Z" fill="#000000" opacity="0.12"/>
+    <path d="M294 354 L218 354 L240.0 332.0 L272.0 332.0 Z" fill="#000000" opacity="0.26"/>
+    <path d="M218 354 L218 278 L240.0 300.0 L240.0 332.0 Z" fill="#FFFFFF" opacity="0.06"/>
+    <rect x="240.0" y="300.0" width="32" height="32" fill="#FFFFFF" opacity="0.10"/>
+    <path d="M218 278 L240.0 300.0 M294 278 L272.0 300.0 M294 354 L272.0 332.0 M218 354 L240.0 332.0" stroke="#FFFFFF" stroke-width="1.2" opacity="0.25" fill="none"/>
+    <rect x="218" y="278" width="76" height="76" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.2"/>
+    <path d="M204 264 L236 264 L204 296 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M286 364 L304 364 L304 346 Z" fill="#FFFFFF" opacity="0.12"/>
+    <rect x="199" y="259" width="114" height="114" rx="8" fill="none" stroke="#FFD976" stroke-width="2" opacity="0.7"/>
+  </g>
+  <!-- Étincelles -->
+  <path d="M108 102 L111.52 114.48 L124 118 L111.52 121.52 L108 134 L104.48 121.52 L92 118 L104.48 114.48 Z" fill="#FFFFFF" opacity="0.9"/>
+  <path d="M430 288 L432.64 297.36 L442 300 L432.64 302.64 L430 312 L427.36 302.64 L418 300 L427.36 297.36 Z" fill="#6CF5E6" opacity="0.85"/>
+  <path d="M150 321 L151.98 328.02 L159 330 L151.98 331.98 L150 339 L148.02 331.98 L141 330 L148.02 328.02 Z" fill="#FFD976" opacity="0.8"/>
+  <path d="M392 101 L393.54 106.46 L399 108 L393.54 109.54 L392 115 L390.46 109.54 L385 108 L390.46 106.46 Z" fill="#FF86C6" opacity="0.8"/>
+</svg>

@@ -1,0 +1,1515 @@
+/* ==========================================================
+   BLOCK ROCK — Feuille de style
+   Plan :
+   1. Thèmes (couleurs rangées dans des variables)
+   2. Tailles (tout dépend de --case, la taille d'une case)
+   3. Base de la page
+   4. Écran de jeu : barre, score, grille, réserve
+   5. Les gemmes (le style des blocs)
+   6. Glisser-déposer, aperçu, explosions
+   7. Messages (COMBO !)
+   8. Écrans superposés : accueil, règles, game over
+   9. Boutons
+   ========================================================== */
+
+
+/* ---------- 1. THÈMES ----------
+   Une variable CSS (--nom) est une valeur qu'on réutilise partout.
+   Changer de thème = changer la classe du <body> : toutes les
+   couleurs du jeu changent d'un coup. */
+
+body.theme-obsidienne {
+  --fond-haut: #1E1734;
+  --fond-bas: #040307;
+  --accent: #8F5BFF;
+  --texte: #EFE9FF;
+  --texte-doux: #A99CC9;
+  /* Chaque couleur de bloc a une version claire et une foncée (pour le dégradé) */
+  --c1-clair: #C29BFF;  --c1-fonce: #4A1DA6;  /* violet    */
+  --c2-clair: #6CF5E6;  --c2-fonce: #0A7470;  /* turquoise */
+  --c3-clair: #FF86C6;  --c3-fonce: #9E1460;  /* rose      */
+  --c4-clair: #FFD976;  --c4-fonce: #B0600C;  /* or        */
+}
+
+body.theme-lave {
+  --fond-haut: #3A0E06;
+  --fond-bas: #070201;
+  --accent: #FF5A1F;
+  --texte: #FFEDE3;
+  --texte-doux: #D9A08A;
+  --c1-clair: #FF6B57;  --c1-fonce: #8A1307;  /* rouge   */
+  --c2-clair: #FFA046;  --c2-fonce: #A33E00;  /* orange  */
+  --c3-clair: #FFE15C;  --c3-fonce: #B36B00;  /* jaune   */
+  --c4-clair: #FF5E9C;  --c4-fonce: #86103F;  /* magma   */
+}
+
+body.theme-ocean {
+  --fond-haut: #06284A;
+  --fond-bas: #01060D;
+  --accent: #2FB8FF;
+  --texte: #E6F6FF;
+  --texte-doux: #8FB8D1;
+  --c1-clair: #7CD3FF;  --c1-fonce: #0B5287;  /* bleu      */
+  --c2-clair: #5FF5D2;  --c2-fonce: #03705C;  /* lagon     */
+  --c3-clair: #9EA6FF;  --c3-fonce: #2A2E9C;  /* indigo    */
+  --c4-clair: #E3F8FF;  --c4-fonce: #3E7E9C;  /* écume     */
+}
+
+
+/* ---------- 2. TAILLES ----------
+   --case-base = la taille d'une case de la grille.
+   min() choisit la plus petite de 3 valeurs, pour que le jeu tienne :
+   - au maximum 54 px (sur ordinateur) ;
+   - en largeur : la grille fait environ 8,9 cases de large ;
+   - en hauteur : grille + réserve font environ 12,1 cases de haut,
+     plus ~175 px pour la barre et le score.
+   env(safe-area-inset-...) = la place prise par l'encoche du téléphone. */
+
+:root {
+  --securite-haut: env(safe-area-inset-top, 0px);
+  --securite-bas: env(safe-area-inset-bottom, 0px);
+  --case-base: min(54px,
+                   calc((100vw - 24px) / 8.9),
+                   calc((100vh - 175px - var(--securite-haut) - var(--securite-bas)) / 12.1));
+  --case: var(--case-base);
+  --largeur-jeu: calc(var(--case-base) * 8.9);
+}
+
+/* svh = hauteur de l'écran SANS la barre d'adresse du navigateur mobile.
+   On l'utilise seulement si le navigateur le connaît (@supports). */
+@supports (height: 100svh) {
+  :root {
+    --case-base: min(54px,
+                     calc((100vw - 24px) / 8.9),
+                     calc((100svh - 175px - var(--securite-haut) - var(--securite-bas)) / 12.1));
+  }
+}
+
+
+/* ---------- 3. BASE DE LA PAGE ---------- */
+
+*, *::before, *::after {
+  box-sizing: border-box; /* la bordure est comptée DANS la largeur */
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;            /* pas de défilement : c'est un jeu */
+  overscroll-behavior: none;   /* pas d'effet "élastique" sur mobile */
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--texte);
+  background-color: var(--fond-bas);
+  background-image: linear-gradient(160deg, var(--fond-haut), var(--fond-bas) 75%);
+  /* Empêche la sélection de texte, le menu "appui long" et le zoom au double-tap */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reflets d'obsidienne en diagonale dans le fond, comme sur le logo */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, transparent 18%, rgba(255,255,255,.035) 18%, rgba(255,255,255,.035) 30%, transparent 30%),
+    linear-gradient(135deg, transparent 72%, rgba(255,255,255,.025) 72%, rgba(255,255,255,.025) 80%, transparent 80%);
+}
+
+/* Les halos de lumière du fond. Ils sont IMMOBILES : animés, ils obligeaient
+   le téléphone à recomposer tout l'écran 60 fois par seconde, même pendant
+   que rien d'autre ne bougeait. */
+.aurore {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurore span {
+  position: absolute;
+  width: 90vmax;
+  height: 90vmax;
+  border-radius: 50%;
+}
+
+.aurore span:nth-child(1) {
+  top: -35vmax;
+  left: -30vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%);
+}
+
+.aurore span:nth-child(2) {
+  bottom: -40vmax;
+  right: -35vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c3-clair) 16%, transparent), transparent 62%);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Petites icônes SVG dessinées avec des traits */
+svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.couronne {
+  width: 16px;
+  height: 16px;
+  fill: var(--c4-clair);
+  stroke: none;
+}
+
+/* Le titre "Block Rock" en dégradé, comme une pierre précieuse */
+.titre {
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: .04em;
+  background: linear-gradient(180deg, #fff 10%, var(--c1-clair) 55%, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.6));
+}
+
+.etiquette {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+}
+
+
+/* ---------- 4. ÉCRAN DE JEU ---------- */
+
+#ecran-jeu {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: calc(8px + var(--securite-haut)) 12px calc(10px + var(--securite-bas));
+  touch-action: none; /* sur l'écran de jeu, le doigt ne fait ni défiler ni zoomer */
+}
+
+/* Barre du haut */
+.barre {
+  width: var(--largeur-jeu);
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.marque {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.marque .logo {
+  width: 36px;
+  height: 36px;
+}
+
+.marque .titre {
+  font-size: 1.35rem;
+}
+
+.btn-rond {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  transition: transform .15s;
+}
+
+.btn-rond:active {
+  transform: scale(.9);
+}
+
+/* Le bouton son : on montre une icône ou l'autre */
+.icone-son-off,
+#btn-son.muet .icone-son-on {
+  display: none;
+}
+#btn-son.muet .icone-son-off {
+  display: block;
+}
+
+/* Zone de score : 3 colonnes, le score au milieu, le record à droite */
+.zone-score {
+  width: var(--largeur-jeu);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+}
+
+.bloc-score {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bloc-record {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-bottom: 6px;
+}
+
+.score {
+  font-size: clamp(2.4rem, 12vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums; /* tous les chiffres ont la même largeur */
+  background: linear-gradient(180deg, #fff 30%, var(--c4-clair));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,.5));
+}
+
+/* Petit rebond quand le score augmente */
+.score.saute {
+  animation: saute .35s ease-out;
+}
+
+@keyframes saute {
+  40%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* Mode niveaux : le niveau et les coups à gauche… */
+.bloc-niveau {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-bottom: 6px;
+}
+
+/* …et l'objectif à droite */
+.bloc-objectif {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-bottom: 6px;
+}
+
+.bloc-score,
+.bloc-record {
+  grid-row: 1;
+}
+
+.valeur-hud {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--texte-doux);
+  font-variant-numeric: tabular-nums;
+}
+
+.valeur-hud b {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--texte);
+}
+
+/* Plus que 3 coups : en rouge, et ça bat comme un cœur */
+.valeur-hud.alerte b {
+  display: inline-block;
+  color: #FF6B6B;
+  animation: saute .7s ease-in-out infinite;
+}
+
+.barre-objectif {
+  width: 84px;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,.1);
+}
+
+.barre-objectif div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--c2-clair), var(--c1-clair));
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform .45s ease-out;
+}
+
+.record {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--c4-clair);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quand on bat son record pendant la partie */
+.record.battu {
+  animation: brille-record 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes brille-record {
+  to { text-shadow: 0 0 12px var(--c4-clair); }
+}
+
+/* Le plateau contient la grille et les messages */
+.plateau {
+  position: relative;
+}
+
+.plateau.tremble {
+  animation: tremble .4s;
+}
+
+@keyframes tremble {
+  20% { transform: translate(-5px, 2px); }
+  40% { transform: translate(5px, -3px); }
+  60% { transform: translate(-3px, 3px); }
+  80% { transform: translate(2px, -1px); }
+}
+
+/* La grille : 8 colonnes grâce à CSS Grid */
+.grille {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(8, var(--case));
+  gap: calc(var(--case) * .06);
+  padding: calc(var(--case) * .22);
+  border-radius: calc(var(--case) * .32);
+  background: rgba(0,0,0,.38);
+  box-shadow:
+    inset 0 2px 12px rgba(0,0,0,.7),
+    0 0 0 1px rgba(255,255,255,.07),
+    0 24px 60px -24px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* Le liseré lumineux autour de la grille, comme une monture de bijou.
+   (Avant, il utilisait un "mask" posé PAR-DESSUS les cases : chaque case qui
+   changeait pendant le glissement obligeait à recalculer le masque. Un simple
+   contour fait le même effet, sans rien coûter.) */
+.grille {
+  outline: 1.5px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 0;
+}
+
+/* Une case vide : un creux sombre.
+   "contain" prévient le navigateur : ce qui change dans une case ne
+   déplace rien autour. Il a moins de travail à chaque changement. */
+.case {
+  contain: layout style;
+  width: var(--case);
+  height: var(--case);
+  border-radius: 16%;
+  background: rgba(255,255,255,.035);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.04);
+}
+
+/* Fin de partie : la grille s'éteint case par case
+   (le délai de chaque case est réglé en JavaScript, ça fait une vague) */
+.grille.eteinte .case {
+  filter: grayscale(.85) brightness(.5);
+  transition: filter .5s;
+}
+
+/* La réserve : 3 emplacements côte à côte.
+   Les pièces y sont dessinées à 52 % de leur taille réelle. */
+.reserve {
+  --case: calc(var(--case-base) * .52);
+  width: var(--largeur-jeu);
+  height: calc(var(--case-base) * 2.9);
+  margin-top: calc(var(--case-base) * .2);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.emplacement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none; /* le doigt ne fait pas défiler la page */
+  cursor: grab;
+}
+
+/* Une pièce = une petite grille de blocs */
+.piece {
+  display: grid;
+  gap: calc(var(--case) * .06);
+  transition: filter .3s, opacity .3s;
+}
+
+.bloc {
+  width: var(--case);
+  height: var(--case);
+}
+
+.bloc.vide {
+  visibility: hidden;
+}
+
+.piece.cachee {
+  opacity: 0;
+}
+
+/* Pièce qui ne rentre plus nulle part : grisée */
+.piece.bloquee {
+  filter: grayscale(1) brightness(.6);
+  opacity: .5;
+}
+
+/* Nouvelle pièce qui arrive */
+.piece.apparait {
+  animation: apparait .45s cubic-bezier(.3, 1.5, .5, 1) both;
+}
+
+@keyframes apparait {
+  from { transform: scale(0) rotate(-15deg); opacity: 0; }
+}
+
+/* Petit "non" quand on touche une pièce grisée */
+.piece.refuse {
+  animation: refuse .3s;
+}
+
+@keyframes refuse {
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+
+/* ---------- 5. LES GEMMES ----------
+   Chaque bloc est taillé comme sur le logo :
+   - un dégradé clair (haut-gauche) → foncé (bas-droite) ;
+   - une bordure épaisse aux 4 côtés de teintes différentes : là où deux
+     bordures se rencontrent, le navigateur coupe en diagonale, ce qui
+     dessine les facettes biseautées ;
+   - ::before = la "table" centrale de la gemme, avec un 2e biseau ;
+   - ::after  = le petit reflet blanc en triangle dans le coin. */
+
+.gemme {
+  --clair: var(--c1-clair);
+  --fonce: var(--c1-fonce);
+  position: relative;
+  background: linear-gradient(135deg, var(--clair), var(--fonce));
+  background-origin: border-box; /* le dégradé passe aussi sous la bordure */
+  border: calc(var(--case) * .16) solid;
+  border-color: rgba(255,255,255,.34) rgba(0,0,0,.24) rgba(0,0,0,.42) rgba(255,255,255,.15);
+  border-radius: 16%;
+  outline: 1px solid color-mix(in srgb, var(--clair) 70%, transparent);
+  outline-offset: -1px;
+  box-shadow:
+    0 0 0 1.5px rgba(10,7,16,.9),
+    0 calc(var(--case) * .07) calc(var(--case) * .14) rgba(0,0,0,.45);
+}
+
+.gemme::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: calc(var(--case) * .19) solid;
+  border-color: rgba(255,255,255,.16) rgba(0,0,0,.12) rgba(0,0,0,.26) rgba(255,255,255,.06);
+  border-radius: 6%;
+  background: rgba(255,255,255,.1);
+  background-clip: padding-box;
+  box-shadow: 0 0 0 .5px rgba(255,255,255,.2);
+}
+
+.gemme::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--case) * -.12);
+  left: calc(var(--case) * -.12);
+  width: calc(var(--case) * .3);
+  height: calc(var(--case) * .3);
+  background: linear-gradient(135deg, rgba(255,255,255,.65) 50%, transparent 50%);
+  border-top-left-radius: 30%;
+}
+
+/* Les 4 couleurs : chaque classe choisit son clair et son foncé */
+.c1 { --clair: var(--c1-clair); --fonce: var(--c1-fonce); }
+.c2 { --clair: var(--c2-clair); --fonce: var(--c2-fonce); }
+.c3 { --clair: var(--c3-clair); --fonce: var(--c3-fonce); }
+.c4 { --clair: var(--c4-clair); --fonce: var(--c4-fonce); }
+
+/* c5 = le bloc spécial OBSIDIENNE : noir, avec un reflet qui passe en boucle */
+.c5 {
+  --clair: #6A6280;
+  --fonce: #050308;
+  box-shadow:
+    0 0 0 1.5px #000,
+    0 0 calc(var(--case) * .35) color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* Le reflet "pulse" en jouant sur l'opacité : la carte graphique s'en charge seule.
+   (Avant, il glissait avec background-position, ce qui redessinait la gemme à chaque image.) */
+.c5::before {
+  border-color: rgba(255,255,255,.14) rgba(0,0,0,.3) rgba(0,0,0,.5) rgba(255,255,255,.08);
+  background: linear-gradient(125deg, rgba(255,255,255,.55), transparent 55%);
+  background-clip: border-box;
+  animation: reflet 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes reflet {
+  from { opacity: .2; }
+  to   { opacity: 1; }
+}
+
+/* c6 = ROCHER (mode niveaux) : pierre grise, fissurée, peu brillante */
+.c6 {
+  --clair: #ABA4B8;
+  --fonce: #423C4D;
+}
+
+.c6::before {
+  border-color: rgba(255,255,255,.12) rgba(0,0,0,.15) rgba(0,0,0,.3) rgba(255,255,255,.06);
+  /* Deux traits sombres en diagonale = les fissures */
+  background:
+    linear-gradient(115deg, transparent 44%, rgba(20,15,28,.75) 45%, rgba(20,15,28,.75) 55%, transparent 56%),
+    linear-gradient(30deg, transparent 46%, rgba(20,15,28,.55) 47%, rgba(20,15,28,.55) 53%, transparent 54%),
+    rgba(255,255,255,.04);
+}
+
+/* c7 = ROCHER DUR : granit foncé et tacheté, au biseau plus épais */
+.c7 {
+  --clair: #7A7389;
+  --fonce: #1B1724;
+  border-width: calc(var(--case) * .2);
+}
+
+.c7::before {
+  border-color: rgba(255,255,255,.1) rgba(0,0,0,.25) rgba(0,0,0,.4) rgba(255,255,255,.05);
+  background:
+    radial-gradient(circle at 30% 35%, rgba(255,255,255,.3) 0 8%, transparent 9%),
+    radial-gradient(circle at 70% 68%, rgba(255,255,255,.2) 0 7%, transparent 8%),
+    radial-gradient(circle at 68% 28%, rgba(0,0,0,.4) 0 9%, transparent 10%),
+    rgba(255,255,255,.04);
+}
+
+/* La pierre brille moins qu'une gemme : reflet discret */
+.c6::after,
+.c7::after {
+  opacity: .35;
+}
+
+/* Un rocher dur qui encaisse une explosion : il tremble */
+.case.fissure {
+  animation: fissure .35s;
+}
+
+@keyframes fissure {
+  20% { transform: translate(-3px, 1px) rotate(-4deg); }
+  45% { transform: translate(3px, -1px) rotate(3deg); }
+  70% { transform: translate(-2px, 0) rotate(-2deg); }
+}
+
+
+/* ---------- 6. GLISSER-DÉPOSER, APERÇU, EXPLOSIONS ---------- */
+
+/* La pièce qui suit le doigt. Elle est en taille réelle (comme la grille). */
+.flottante {
+  --case: var(--case-base);
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 40;
+  pointer-events: none;   /* elle ne "bloque" pas le doigt */
+  will-change: transform; /* prévient le navigateur : elle va bouger */
+}
+
+/* Au départ, elle a la taille de la réserve (52 %)… */
+.flottante .piece {
+  transform: scale(.52);
+  transition: transform .14s ease-out;
+}
+
+/* …puis elle grandit dès qu'on la prend */
+.flottante.prise .piece {
+  transform: scale(1);
+}
+
+/* Ombre de la pièce soulevée : flou plus court = dessinée plus vite au moment où on l'attrape */
+.flottante .gemme {
+  box-shadow:
+    0 0 0 1.5px rgba(10,7,16,.9),
+    0 calc(var(--case) * .22) calc(var(--case) * .25) rgba(0,0,0,.45);
+}
+
+/* Posée : elle "s'aimante" sur sa case en 90 ms */
+.flottante.aimantee {
+  transition: transform .09s ease-out;
+}
+
+.flottante.aimantee .piece {
+  transform: scale(1);
+}
+
+/* Retour à sa place si on la lâche au mauvais endroit */
+.flottante.retour {
+  transition: transform .26s cubic-bezier(.3, .7, .4, 1);
+}
+
+.flottante.retour .piece {
+  transform: scale(.52);
+  transition-duration: .26s;
+}
+
+/* L'aperçu transparent de l'endroit où la pièce va se poser */
+.case.apercu {
+  opacity: .42;
+}
+
+/* Les lignes qui vont exploser si on pose ici : chaque gemme reçoit un voile
+   clair, dessiné UNE fois. Pas de filtre ni d'animation par case : c'était
+   ça qui alourdissait le glissement (un calque graphique par case !). */
+.case.va-exploser {
+  background-image:
+    linear-gradient(rgba(255,255,255,.3), rgba(255,255,255,.3)),
+    linear-gradient(135deg, var(--clair), var(--fonce));
+}
+
+/* À la place : UN cadre lumineux par ligne, qui pulse avec l'opacité seulement */
+.surbrillance {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: calc(var(--case) * .2);
+  background: rgba(255,255,255,.1);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.75),
+    0 0 calc(var(--case) * .45) var(--accent);
+  will-change: opacity;
+  animation: surbrillance .5s ease-in-out infinite alternate;
+}
+
+@keyframes surbrillance {
+  from { opacity: .35; }
+  to   { opacity: 1; }
+}
+
+/* Bloc qui vient d'être posé : il "tape" sur la grille avec un petit rebond.
+   Il commence 80 ms plus tard, le temps que la pièce s'aimante. */
+.case.pose {
+  animation: pose .3s ease-out .08s;
+}
+
+@keyframes pose {
+  40% { transform: scale(1.1); }
+}
+
+/* Bloc qui explose (le délai est réglé en JavaScript pour faire une vague).
+   Il devient blanc d'un coup (un seul dessin), puis on n'anime que
+   transform et opacity : la carte graphique fait tout le travail. */
+.case.explose {
+  z-index: 2;
+  background-image:
+    linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,.55)),
+    linear-gradient(135deg, var(--clair), var(--fonce));
+  animation: explose .38s ease-in both;
+}
+
+@keyframes explose {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.18); }
+  100% { transform: scale(.15) rotate(30deg); opacity: 0; }
+}
+
+/* Le rayon de lumière qui balaie une ligne qui explose */
+.rayon {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 999px;
+  /* Blanc au centre, teinté de la couleur du thème sur les bords */
+  background: radial-gradient(closest-side, rgba(255,255,255,.8), color-mix(in srgb, var(--accent) 45%, transparent) 70%, transparent);
+  will-change: transform, opacity;
+  animation: rayon .45s ease-out .06s both;
+}
+
+.rayon.colonne {
+  animation-name: rayon-vertical;
+}
+
+/* Le rayon s'ouvre depuis le centre, puis s'amincit en disparaissant */
+@keyframes rayon {
+  0%   { transform: scale(0, .5); opacity: 1; }
+  35%  { transform: scale(1.05, .7); opacity: .9; }
+  100% { transform: scale(1.1, .05); opacity: 0; }
+}
+
+@keyframes rayon-vertical {
+  0%   { transform: scale(.5, 0); opacity: 1; }
+  35%  { transform: scale(.7, 1.05); opacity: .9; }
+  100% { transform: scale(.05, 1.1); opacity: 0; }
+}
+
+/* Les points "+4" qui s'envolent de la pièce posée */
+.points-pose {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  font-size: calc(var(--case) * .5);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0,0,0,.6), 0 0 10px var(--accent);
+  will-change: transform, opacity;
+  animation: points-pose .8s ease-out .08s both;
+}
+
+@keyframes points-pose {
+  0%   { transform: translate(-50%, -30%) scale(.6); opacity: 0; }
+  20%  { transform: translate(-50%, -60%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -170%) scale(1); opacity: 0; }
+}
+
+/* Petite étoile qui scintille de temps en temps sur une gemme */
+.scintille {
+  position: absolute;
+  z-index: 3;
+  width: calc(var(--case) * .42);
+  height: calc(var(--case) * .42);
+  margin: calc(var(--case) * -.21) 0 0 calc(var(--case) * -.21);
+  background: #fff;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: scintille .9s ease-in-out both;
+}
+
+@keyframes scintille {
+  0%   { transform: scale(0) rotate(0); opacity: 0; }
+  50%  { transform: scale(1) rotate(45deg); opacity: 1; }
+  100% { transform: scale(0) rotate(90deg); opacity: 0; }
+}
+
+/* La toile des éclats couvre tout l'écran, mais laisse passer les clics */
+#eclats {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 30;
+  pointer-events: none;
+}
+
+
+/* ---------- 7. MESSAGES (COMBO !) ---------- */
+
+.messages {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.msg {
+  font-size: calc(var(--case-base) * .72);
+  font-weight: 900;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #fff 15%, var(--c4-clair) 55%, var(--c3-clair));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,.6)) drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 70%, transparent));
+  will-change: transform, opacity;
+  animation: msg 1.3s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+
+.msg.points {
+  font-size: calc(var(--case-base) * .58);
+  background-image: linear-gradient(180deg, #fff 20%, var(--c2-clair));
+}
+
+.msg.serie {
+  font-size: calc(var(--case-base) * .5);
+  background-image: linear-gradient(180deg, #fff 20%, var(--c3-clair));
+}
+
+.msg.special {
+  background-image: linear-gradient(180deg, #fff 10%, var(--c1-clair) 60%, var(--accent));
+}
+
+@keyframes msg {
+  0%   { transform: scale(.3); opacity: 0; }
+  18%  { transform: scale(1.15); opacity: 1; }
+  30%  { transform: scale(1); }
+  75%  { transform: translateY(-6px); opacity: 1; }
+  100% { transform: translateY(-34px) scale(.95); opacity: 0; }
+}
+
+
+/* ---------- 8. ÉCRANS SUPERPOSÉS ---------- */
+
+.superpose {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: calc(20px + var(--securite-haut)) 20px calc(20px + var(--securite-bas));
+  text-align: center;
+  touch-action: manipulation;
+  background: rgba(4,3,8,.85);
+  background: color-mix(in srgb, var(--fond-bas) 84%, transparent);
+  /* Caché par défaut, avec un fondu */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .3s, visibility .3s;
+}
+
+.superpose.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Flou derrière les fenêtres : SEULEMENT pour les petites fenêtres immobiles
+   (règles, fin, présentation, victoire). Le flou est recalculé à chaque image
+   tant que quelque chose bouge dedans : sur l'accueil (gemmes qui montent) ou
+   la carte (niveau qui respire), il faisait ramer. Et il y était caché de toute façon. */
+#ecran-regles,
+#ecran-fin,
+#ecran-intro,
+#ecran-victoire {
+  background: color-mix(in srgb, var(--fond-bas) 70%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Accueil : le fond est plus opaque */
+.accueil {
+  background-color: var(--fond-bas);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 30%, color-mix(in srgb, var(--accent) 28%, transparent), transparent),
+    linear-gradient(160deg, var(--fond-haut), var(--fond-bas) 80%);
+}
+
+/* Les gemmes qui montent derrière l'accueil */
+.gemmes-fond {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Tout le contenu de l'accueil passe devant ces gemmes */
+.accueil > :not(.gemmes-fond) {
+  position: relative;
+  z-index: 1;
+}
+
+.gemme-volante {
+  position: absolute;
+  bottom: -60px;
+  width: var(--case);
+  height: var(--case);
+  opacity: .2;
+  will-change: transform;
+  animation: monte-fond 12s linear infinite;
+}
+
+@keyframes monte-fond {
+  to { transform: translateY(calc(-100vh - 120px)) rotate(200deg); }
+}
+
+/* Écran caché : on met ses animations en pause (économise la batterie) */
+.superpose:not(.visible) .gemme-volante,
+.superpose:not(.visible) .logo-grand {
+  animation-play-state: paused;
+}
+
+.logo-grand {
+  width: min(52vw, 26vh, 230px);
+  height: auto;
+  filter: drop-shadow(0 18px 40px rgba(0,0,0,.6));
+  animation: flotte 4s ease-in-out infinite;
+}
+
+@keyframes flotte {
+  50% { transform: translateY(-10px) rotate(-1.5deg); }
+}
+
+.titre-grand {
+  font-size: clamp(2.4rem, 12vw, 3.6rem);
+  margin-top: -6px;
+}
+
+.record-accueil,
+.record-fin {
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--texte-doux);
+}
+
+.record-accueil strong,
+.record-fin strong {
+  color: var(--c4-clair);
+  font-size: 1.15rem;
+}
+
+/* Les deux cartes de mode : Niveaux (turquoise) et Infini (violet) */
+.modes {
+  display: flex;
+  gap: 12px;
+  width: min(300px, 84vw);
+}
+
+.carte-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px 12px;
+  border: none;
+  border-radius: 20px;
+  color: #160F26;
+  transition: transform .1s, box-shadow .1s;
+}
+
+.carte-mode:active {
+  transform: translateY(4px);
+}
+
+.mode-niveaux {
+  background: linear-gradient(180deg, #F2FFFD, var(--c2-clair) 45%, color-mix(in srgb, var(--c2-clair) 55%, var(--c2-fonce)));
+  box-shadow: 0 6px 0 var(--c2-fonce), 0 14px 30px -12px var(--c2-clair);
+}
+
+.mode-infini {
+  background: linear-gradient(180deg, #FAF5FF, var(--c1-clair) 45%, color-mix(in srgb, var(--c1-clair) 55%, var(--c1-fonce)));
+  box-shadow: 0 6px 0 var(--c1-fonce), 0 14px 30px -12px var(--c1-clair);
+}
+
+.carte-mode:active.mode-niveaux { box-shadow: 0 2px 0 var(--c2-fonce); }
+.carte-mode:active.mode-infini  { box-shadow: 0 2px 0 var(--c1-fonce); }
+
+.nom-mode {
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: .03em;
+}
+
+.info-mode {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .85rem;
+  font-weight: 700;
+  opacity: .8;
+}
+
+.info-mode .couronne {
+  fill: currentColor;
+}
+
+/* Petite étoile pleine (accueil, carte) */
+.etoile-mini {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  stroke: none;
+}
+
+/* Bouton discret, comme un lien */
+.btn-lien {
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  font-weight: 700;
+  color: var(--texte-doux);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.themes {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.choix-themes {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-theme {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: .78rem;
+  font-weight: 700;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04);
+  color: var(--texte-doux);
+}
+
+.btn-theme.actif {
+  border-color: var(--accent);
+  color: var(--texte);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+/* Petite pastille qui montre les couleurs de chaque thème */
+.pastille {
+  width: 44px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.3);
+}
+.pastille-obsidienne { background: linear-gradient(90deg, #C29BFF 25%, #6CF5E6 25% 50%, #FF86C6 50% 75%, #FFD976 75%); }
+.pastille-lave       { background: linear-gradient(90deg, #FF6B57 25%, #FFA046 25% 50%, #FFE15C 50% 75%, #FF5E9C 75%); }
+.pastille-ocean      { background: linear-gradient(90deg, #7CD3FF 25%, #5FF5D2 25% 50%, #9EA6FF 50% 75%, #E3F8FF 75%); }
+
+.astuce {
+  max-width: 300px;
+  margin: 4px 0 0;
+  font-size: .8rem;
+  color: var(--texte-doux);
+}
+
+/* Une "carte" en verre fumé pour les règles et le game over */
+.carte {
+  width: min(380px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  touch-action: pan-y; /* ici on a le droit de faire défiler */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 22px;
+  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(160deg, rgba(255,255,255,.09), rgba(255,255,255,.02));
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(0,0,0,.4);
+  transform: translateY(24px) scale(.96);
+  transition: transform .45s cubic-bezier(.2, 1.3, .4, 1);
+}
+
+.superpose.visible .carte {
+  transform: none;
+}
+
+.carte h2 {
+  margin: 0 0 4px;
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.regles {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  font-size: .92rem;
+  line-height: 1.45;
+  color: var(--texte-doux);
+}
+
+.regles li {
+  position: relative;
+  padding: 6px 0 6px 22px;
+}
+
+/* Petite gemme devant chaque règle */
+.regles li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 12px;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: linear-gradient(135deg, var(--c1-clair), var(--c1-fonce));
+}
+
+.regles b {
+  color: var(--texte);
+}
+
+.score-final {
+  font-size: 4rem;
+}
+
+.nouveau-record {
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  color: #2a1700;
+  background: linear-gradient(180deg, #fff3c4, var(--c4-clair) 50%, var(--c4-fonce));
+  box-shadow: 0 0 24px color-mix(in srgb, var(--c4-clair) 70%, transparent);
+  animation: saute .6s ease-out .3s both;
+}
+
+
+/* ----- Carte des niveaux ----- */
+
+.ecran-carte {
+  justify-content: flex-start;
+  gap: 10px;
+  background-color: var(--fond-bas);
+  background-image: linear-gradient(160deg, var(--fond-haut), var(--fond-bas) 80%);
+}
+
+.entete-carte {
+  width: min(420px, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.entete-carte h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.total-etoiles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  color: var(--c4-clair);
+}
+
+/* La liste défile au doigt (c'est le seul endroit qui défile) */
+.liste-niveaux {
+  width: min(420px, 100%);
+  flex: 1;
+  min-height: 0; /* sans ça, une liste dans un "flex" refuse de rétrécir et ne défile pas */
+  overflow-y: auto;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  padding: 4px 4px 40px;
+}
+
+.monde h3 {
+  margin: 14px 0 12px;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--texte-doux);
+}
+
+.grille-monde {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 28px 8px;
+}
+
+/* Un bouton de niveau = une grosse gemme avec son numéro */
+.btn-niveau {
+  --case: min(56px, 14vw);
+  justify-self: center;
+  width: var(--case);
+  height: var(--case);
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--case) * .36);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0,0,0,.55);
+}
+
+/* Le numéro passe devant les facettes de la gemme */
+.btn-niveau .num {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+}
+
+.btn-niveau .num svg {
+  width: calc(var(--case) * .38);
+  height: calc(var(--case) * .38);
+}
+
+.btn-niveau:active {
+  transform: scale(.92);
+}
+
+/* Les 3 petites étoiles sous le bouton */
+.etoiles-niveau {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: calc(var(--case) * -.5);
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1px;
+}
+
+.etoiles-niveau svg {
+  width: 13px;
+  height: 13px;
+  fill: rgba(255,255,255,.14);
+  stroke: none;
+}
+
+.etoiles-niveau .pleine svg {
+  fill: var(--c4-clair);
+  filter: drop-shadow(0 0 3px var(--c4-clair));
+}
+
+.btn-niveau.verrou {
+  filter: grayscale(1) brightness(.45);
+}
+
+.btn-niveau.verrou .etoiles-niveau {
+  display: none;
+}
+
+/* Les boss : un anneau rouge et une étiquette "BOSS" */
+.btn-niveau.boss {
+  outline: 2px solid var(--c3-clair);
+  outline-offset: 3px;
+}
+
+.marque-boss {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--case) * -.42);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-shadow: none;
+  color: #fff;
+  background: var(--c3-fonce);
+}
+
+/* Le prochain niveau à jouer "respire" pour attirer l'œil */
+.btn-niveau.actuel {
+  animation: respire 1.3s ease-in-out infinite;
+}
+
+@keyframes respire {
+  50% { transform: scale(1.1); }
+}
+
+/* ----- Présentation d'un niveau ----- */
+
+.badge-boss {
+  margin: 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  color: #fff;
+  background: linear-gradient(180deg, var(--c3-clair), var(--c3-fonce));
+}
+
+/* La mini-grille réutilise les styles de la vraie, en petit */
+.grille.mini {
+  --case: 15px;
+  margin: 4px 0;
+}
+
+.objectifs {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.objectif {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.06);
+}
+
+.objectif b {
+  font-size: 1.9rem;
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--c2-clair);
+}
+
+.objectif span {
+  font-size: .76rem;
+  color: var(--texte-doux);
+}
+
+/* ----- Victoire ----- */
+
+.etoiles-victoire {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 4px 0 6px;
+}
+
+.etoile-v {
+  width: 58px;
+  height: 58px;
+  fill: rgba(255,255,255,.08);
+  stroke: rgba(255,255,255,.2);
+  stroke-width: 1;
+}
+
+/* L'étoile du milieu est plus grande et plus haute */
+.etoile-v:nth-child(2) {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 10px;
+}
+
+.etoile-v.gagnee {
+  fill: var(--c4-clair);
+  stroke: rgba(255,255,255,.6);
+  filter: drop-shadow(0 0 12px var(--c4-clair));
+  animation: etoile-gagnee .5s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+
+@keyframes etoile-gagnee {
+  from { transform: scale(0) rotate(-120deg); }
+}
+
+.rangee-boutons {
+  display: flex;
+  gap: 10px;
+  width: min(280px, 80vw);
+}
+
+.rangee-boutons .btn-secondaire {
+  flex: 1;
+  width: auto;
+}
+
+
+/* ---------- 9. BOUTONS ---------- */
+
+.btn-principal,
+.btn-secondaire {
+  width: min(280px, 80vw);
+  border-radius: 18px;
+  transition: transform .1s, box-shadow .1s;
+}
+
+/* Le gros bouton doré, en relief */
+.btn-principal {
+  padding: 16px 0;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  color: #2a1700;
+  background: linear-gradient(180deg, #fff1b8, var(--c4-clair) 45%, color-mix(in srgb, var(--c4-clair) 60%, var(--c4-fonce)));
+  box-shadow: 0 6px 0 var(--c4-fonce), 0 14px 30px -10px var(--c4-clair);
+}
+
+.btn-principal:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 var(--c4-fonce), 0 6px 16px -8px var(--c4-clair);
+}
+
+.btn-secondaire {
+  padding: 13px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.07);
+}
+
+.btn-secondaire:active {
+  transform: scale(.97);
+}
+
+.btn-installer {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  font-weight: 700;
+}
+
+.btn-installer svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Sur un écran très petit en hauteur, l'accueil se resserre */
+@media (max-height: 640px) {
+  .superpose { gap: 8px; }
+  .themes { margin-top: 2px; }
+}
+
+/* Si la personne a demandé "moins d'animations" dans son téléphone */
+@media (prefers-reduced-motion: reduce) {
+  .logo-grand,
+  .c5::before,
+  .gemme-volante,
+  .surbrillance { animation: none; }
+}

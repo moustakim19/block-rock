@@ -1,0 +1,20 @@
+{
+  "name": "Block Rock",
+  "short_name": "Block Rock",
+  "description": "Puzzle de blocs-gemmes : remplis les lignes et fais-les exploser !",
+  "lang": "fr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0815",
+  "theme_color": "#1E1734",
+  "categories": ["games"],
+  "icons": [
+    { "src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "logo-block-rock.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

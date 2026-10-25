@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover : le jeu utilise tout l'écran, même autour de l'encoche des iPhone -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Block Rock</title>
+  <meta name="description" content="Block Rock : un puzzle de blocs-gemmes. Remplis les lignes et fais-les exploser !">
+
+  <!-- Icône de l'onglet (favicon) -->
+  <link rel="icon" type="image/svg+xml" href="logo-block-rock.svg">
+
+  <!-- Tout ce qui fait du site une "appli" installable (PWA) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1E1734">
+  <link rel="apple-touch-icon" href="icones/icone-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Block Rock">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<!-- La classe du body choisit le thème de couleurs -->
+<body class="theme-obsidienne">
+
+  <!-- Fond vivant : deux halos de lumière qui dérivent lentement -->
+  <div class="aurore" aria-hidden="true"><span></span><span></span></div>
+
+  <!-- ===================== ÉCRAN DE JEU ===================== -->
+  <main id="ecran-jeu">
+
+    <!-- Barre du haut : bouton menu, logo + titre, bouton son -->
+    <header class="barre">
+      <button id="btn-menu" class="btn-rond" aria-label="Retour à l'accueil">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+
+      <div class="marque">
+        <img class="logo" src="logo-block-rock.svg" alt="Logo Block Rock">
+        <h1 class="titre">Block Rock</h1>
+      </div>
+
+      <button id="btn-son" class="btn-rond" aria-label="Couper le son">
+        <!-- Deux icônes : le CSS affiche l'une ou l'autre selon la classe "muet" -->
+        <svg class="icone-son-on" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+        <svg class="icone-son-off" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>
+      </button>
+    </header>
+
+    <!-- Zone de score : le score au centre.
+         Mode infini : le meilleur score à droite.
+         Mode niveaux : le niveau et les coups à gauche, l'objectif à droite. -->
+    <section class="zone-score">
+      <div id="bloc-niveau" class="bloc-niveau" hidden>
+        <span id="hud-niveau" class="etiquette">Niveau 1</span>
+        <span id="hud-bloc-coups" class="valeur-hud"><b id="hud-coups">∞</b> coups</span>
+      </div>
+      <div class="bloc-score">
+        <span class="etiquette">Score</span>
+        <span id="score" class="score">0</span>
+      </div>
+      <div id="bloc-objectif" class="bloc-objectif" hidden>
+        <span class="etiquette">Objectif</span>
+        <span class="valeur-hud"><b id="hud-lignes">0</b>/<span id="hud-objectif">3</span> lignes</span>
+        <div class="barre-objectif"><div id="hud-barre"></div></div>
+      </div>
+      <div id="bloc-record" class="bloc-record">
+        <span class="etiquette">
+          <svg class="couronne" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>
+          Meilleur
+        </span>
+        <span id="record" class="record">0</span>
+      </div>
+    </section>
+
+    <!-- Le plateau : la grille 8×8 + les messages (COMBO !) par-dessus -->
+    <div id="plateau" class="plateau">
+      <!-- La grille est vide ici : c'est le JavaScript qui crée les 64 cases -->
+      <div id="grille" class="grille"></div>
+      <div id="messages" class="messages"></div>
+    </div>
+
+    <!-- La réserve : les 3 emplacements où apparaissent les pièces -->
+    <div id="reserve" class="reserve">
+      <div class="emplacement" data-index="0"></div>
+      <div class="emplacement" data-index="1"></div>
+      <div class="emplacement" data-index="2"></div>
+    </div>
+  </main>
+
+  <!-- Toile (canvas) transparente sur tout l'écran pour dessiner les éclats de gemmes -->
+  <canvas id="eclats"></canvas>
+
+  <!-- ===================== ÉCRAN D'ACCUEIL ===================== -->
+  <section id="ecran-accueil" class="superpose accueil visible">
+    <!-- Des gemmes qui montent doucement derrière l'accueil (créées en JavaScript) -->
+    <div id="gemmes-fond" class="gemmes-fond" aria-hidden="true"></div>
+    <img class="logo-grand" src="logo-block-rock.svg" alt="Logo Block Rock">
+    <h1 class="titre titre-grand">Block Rock</h1>
+
+    <!-- N'apparaît que si une partie est en cours -->
+    <button id="btn-continuer" class="btn-principal" hidden>Continuer</button>
+
+    <!-- Les deux modes de jeu -->
+    <div class="modes">
+      <button id="btn-niveaux" class="carte-mode mode-niveaux">
+        <span class="nom-mode">Niveaux</span>
+        <span class="info-mode">
+          <svg class="etoile-mini" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+          <span><b id="accueil-etoiles">0</b>/300</span>
+        </span>
+      </button>
+      <button id="btn-infini" class="carte-mode mode-infini">
+        <span class="nom-mode">Infini</span>
+        <span class="info-mode">
+          <svg class="couronne" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>
+          <b id="record-accueil">0</b>
+        </span>
+      </button>
+    </div>
+
+    <button id="btn-regles" class="btn-lien">Comment jouer</button>
+
+    <!-- Choix du thème -->
+    <div class="themes">
+      <span class="etiquette">Thème</span>
+      <div class="choix-themes">
+        <button class="btn-theme" data-theme="obsidienne"><span class="pastille pastille-obsidienne"></span>Obsidienne</button>
+        <button class="btn-theme" data-theme="lave"><span class="pastille pastille-lave"></span>Lave</button>
+        <button class="btn-theme" data-theme="ocean"><span class="pastille pastille-ocean"></span>Océan</button>
+      </div>
+    </div>
+
+    <!-- Apparaît seulement si le navigateur permet d'installer l'appli -->
+    <button id="btn-installer" class="btn-installer" hidden>
+      <svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+      Installer l'appli
+    </button>
+    <p id="astuce-ios" class="astuce" hidden>Pour installer sur iPhone : touche <strong>Partager</strong> puis <strong>« Sur l'écran d'accueil »</strong>.</p>
+  </section>
+
+  <!-- ===================== RÈGLES ===================== -->
+  <section id="ecran-regles" class="superpose">
+    <div class="carte carte-regles">
+      <h2>Comment jouer</h2>
+      <ul class="regles">
+        <li><b>Glisse</b> les pièces sur la grille.</li>
+        <li>Remplis une <b>ligne</b> ou une <b>colonne</b> entière : elle explose ! <b>+10 points</b> par ligne.</li>
+        <li>Chaque bloc posé rapporte <b>1 point</b>.</li>
+        <li>Plusieurs lignes d'un coup = <b>COMBO</b> : les points sont multipliés (x2, x3…).</li>
+        <li>Des explosions à la suite = <b>SÉRIE</b> : bonus à chaque fois. Tu as droit à 2 poses sans explosion avant de perdre ta série.</li>
+        <li>Le bloc <b>obsidienne</b> (noir et brillant) est rare : s'il explose avec une ligne, il fait aussi sauter <b>toute sa colonne</b> (et inversement).</li>
+        <li>Grille entièrement vidée : <b>+300</b> !</li>
+        <li>Une pièce <b>grisée</b> ne rentre nulle part. Si plus aucune pièce ne rentre, c'est perdu.</li>
+        <li><b>Mode Niveaux</b> : fais exploser le nombre de lignes demandé. À partir du niveau 11, tes <b>coups</b> sont comptés (chaque coup restant = +10 points). Ton score donne <b>1 à 3 étoiles</b>.</li>
+        <li><b>Rochers gris</b> : ils explosent avec les lignes. <b>Rochers durs</b> (foncés) : il faut 2 explosions.</li>
+        <li>Tous les 10 niveaux, un <b>BOSS</b> : une grille piégée !</li>
+      </ul>
+      <button id="btn-fermer-regles" class="btn-principal">J'ai compris</button>
+    </div>
+  </section>
+
+  <!-- ===================== GAME OVER ===================== -->
+  <section id="ecran-fin" class="superpose">
+    <div class="carte carte-fin">
+      <h2 id="titre-fin">Plus de place !</h2>
+      <span class="etiquette">Score</span>
+      <div id="score-final" class="score score-final">0</div>
+      <p id="nouveau-record" class="nouveau-record" hidden>Nouveau record !</p>
+      <!-- Mode niveaux : où en était l'objectif -->
+      <p id="objectif-fin" class="record-fin" hidden>Objectif : <strong id="objectif-fin-valeur">0/0</strong> lignes</p>
+      <p id="ligne-record-fin" class="record-fin">
+        <svg class="couronne" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>
+        Meilleur : <strong id="record-fin">0</strong>
+      </p>
+      <button id="btn-rejouer" class="btn-principal">Rejouer</button>
+      <button id="btn-accueil" class="btn-secondaire">Accueil</button>
+    </div>
+  </section>
+
+  <!-- ===================== CARTE DES NIVEAUX ===================== -->
+  <section id="ecran-carte" class="superpose ecran-carte">
+    <div class="entete-carte">
+      <button id="btn-retour-carte" class="btn-rond" aria-label="Retour à l'accueil">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h2>Niveaux</h2>
+      <span class="total-etoiles">
+        <svg class="etoile-mini" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <span><b id="carte-etoiles">0</b>/300</span>
+      </span>
+    </div>
+    <!-- Les 100 boutons de niveaux sont créés en JavaScript -->
+    <div id="liste-niveaux" class="liste-niveaux"></div>
+  </section>
+
+  <!-- ===================== PRÉSENTATION D'UN NIVEAU ===================== -->
+  <section id="ecran-intro" class="superpose">
+    <div class="carte carte-intro">
+      <span id="intro-monde" class="etiquette">Monde 1</span>
+      <h2 id="intro-titre">Niveau 1</h2>
+      <p id="intro-boss" class="badge-boss" hidden>BOSS</p>
+      <!-- Mini-grille : aperçu des rochers de départ -->
+      <div id="intro-grille" class="grille mini"></div>
+      <div class="objectifs">
+        <div class="objectif">
+          <b id="intro-lignes">3</b>
+          <span>lignes à exploser</span>
+        </div>
+        <div class="objectif">
+          <b id="intro-coups">∞</b>
+          <span>coups</span>
+        </div>
+      </div>
+      <p id="intro-astuce" class="astuce"></p>
+      <button id="btn-go" class="btn-principal">C'est parti !</button>
+      <button id="btn-intro-carte" class="btn-secondaire">Carte</button>
+    </div>
+  </section>
+
+  <!-- ===================== NIVEAU RÉUSSI ===================== -->
+  <section id="ecran-victoire" class="superpose">
+    <div class="carte carte-victoire">
+      <h2>Niveau <span id="vic-niveau">1</span> réussi !</h2>
+      <div class="etoiles-victoire">
+        <svg class="etoile-v" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg class="etoile-v" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg class="etoile-v" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+      </div>
+      <span class="etiquette">Score</span>
+      <div id="vic-score" class="score score-final">0</div>
+      <p id="vic-detail" class="astuce"></p>
+      <button id="btn-suivant" class="btn-principal">Niveau suivant</button>
+      <div class="rangee-boutons">
+        <button id="btn-vic-rejouer" class="btn-secondaire">Rejouer</button>
+        <button id="btn-vic-carte" class="btn-secondaire">Carte</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- L'ordre compte : chaque fichier peut utiliser ce que les précédents ont défini -->
+  <script src="js/sons.js"></script>
+  <script src="js/pieces.js"></script>
+  <script src="js/niveaux.js"></script>
+  <script src="js/effets.js"></script>
+  <script src="js/jeu.js"></script>
+</body>
+</html>
